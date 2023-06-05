@@ -1,0 +1,27 @@
+train:
+  name: Compose
+  args:
+    transforms:
+      - name: Resize
+        args:
+          size: [256,256]
+      - name: ToTensor
+      - name: Normalize
+        args:
+          mean: [104., 117., 123.]
+          std: [1., 1., 1.]
+      
+
+val:
+  name: Compose
+  args:
+    transforms:
+      - name: Resize
+        args:
+          size: [256,256]
+      - name: ToTensor
+      - name: Normalize
+        args:
+          mean: [104., 117., 123.]
+          std: [1., 1., 1.]
+      
