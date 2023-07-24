@@ -1,27 +1,30 @@
 import logging
 from typing import Callable, Dict, Optional
-
 import yaml
+from pathlib import Path
+
+import torch
 from torch.utils.data.dataset import random_split
 
 from dioscuri.base.opt import Opts
 
 from dioscuri.base.optimizers import OPTIMIZER_REGISTRY
 from dioscuri.base.optimizers.lr_scheduler import SCHEDULER_REGISTRY
-from dioscuri.faceagegender.losses import LOSSES_REGISTRY
-from dioscuri.faceagegender.datasets import DATASET_REGISTRY
-from dioscuri.faceagegender.trainer import TRAINER_REGISTRY
-from dioscuri.faceagegender.models import MODEL_REGISTRY
-from dioscuri.faceagegender.metrics import METRIC_REGISTRY
-from dioscuri.faceagegender.transforms.torch_transform import TRANSFORM_REGISTRY
-from dioscuri.faceagegender.test import evaluate
-from dioscuri.faceagegender.models.fag_wrapper import FAGModelWithLoss
-from dioscuri.utils.getter import (get_dataloader, get_instance,
-                                 get_instance_recursively)
+from dioscuri.base.transforms.alb import TRANSFORM_REGISTRY
+from dioscuri.base.losses import LOSSES_REGISTRY
+from dioscuri.base.datasets import DATASET_REGISTRY
+from dioscuri.base.trainer import TRAINER_REGISTRY
+from dioscuri.base.models import MODEL_REGISTRY
+from dioscuri.base.metrics import METRIC_REGISTRY
+from dioscuri.base.test import evaluate
+from dioscuri.base.models.wrapper import ModelWithLoss
+from dioscuri.utils.getter import (get_dataloader, 
+                               get_instance, 
+                               get_instance_recursively)
 from dioscuri.utils.loading import load_yaml
 
 
-class Pipeline(object):
+class BasePipeline:
     """docstring for Pipeline."""
 
     def __init__(
@@ -30,7 +33,7 @@ class Pipeline(object):
         cfg_path: Optional[str] = None,
         transform_cfg_path: Optional[str] = None,
     ):
-        super(Pipeline, self).__init__()
+        super(BasePipeline, self).__init__()
         self.opt = opt
         assert (cfg_path is not None) or (
             opt.cfg_pipeline is not None
@@ -38,7 +41,7 @@ class Pipeline(object):
         self.cfg = (
             load_yaml(cfg_path) if cfg_path is not None else load_yaml(opt.cfg_pipeline)
         )
-
+        
         assert (transform_cfg_path is not None) or (
             opt.cfg_transform is not None
         ), "learner params is none, \n please create config file follow default format."
@@ -47,9 +50,9 @@ class Pipeline(object):
         else:
             self.transform_cfg = load_yaml(opt.cfg_transform)
 
-        self.device = opt.device
-        print(self.device)
 
+        self.device = opt.device
+        torch.cuda.set_device(self.device)
         self.transform = None
         if self.transform_cfg is not None:
             self.transform = get_instance_recursively(
@@ -57,23 +60,14 @@ class Pipeline(object):
             )
 
         data = self.get_data(self.cfg["data"], self.transform, return_dataset=False)
-        (
-            self.train_dataloader,
-            self.val_dataloader,
-            self.train_dataset,
-            self.val_dataset,
-        ) = data
+        self.train_dataloader,self.val_dataloader,self.train_dataset,self.val_dataset = data
+        
+        backbone = get_instance(self.cfg["model"], registry=MODEL_REGISTRY).to(self.device)
+        
 
-        model = get_instance(self.cfg["model"], registry=MODEL_REGISTRY).to(self.device)
-        criterion_age = get_instance(self.cfg["criterion"]["age"], registry=LOSSES_REGISTRY).to(
-            self.device
-        )
-
-        criterion_gender = get_instance(self.cfg["criterion"]["gender"], registry=LOSSES_REGISTRY).to(
-            self.device
-        )
-
-        self.model = FAGModelWithLoss(model, criterion_age, criterion_gender)
+        criterion = get_instance(self.cfg["criterion"], registry=LOSSES_REGISTRY)
+        
+        self.model = ModelWithLoss(backbone, criterion)
 
     
         self.metric = {
@@ -101,6 +95,7 @@ class Pipeline(object):
             metrics=self.metric,
             optimizer=self.optimizer,
             registry=TRAINER_REGISTRY,
+            device=self.device
         )
 
         save_cfg = {}
@@ -116,7 +111,7 @@ class Pipeline(object):
 
     def sanitycheck(self):
         self.logger.info("Sanity checking before training")
-        self.evaluate()
+        
 
     def fit(self):
         self.sanitycheck()
@@ -150,7 +145,7 @@ class Pipeline(object):
                     registry=DATASET_REGISTRY,
                     transform=transform[stage],
                 )
-            dataloader = get_dataloader(cfg["loader"][stage], dataset)
+            dataloader = get_dataloader(cfg["loader"][stage], dataset, local_rank=self.device)
             return dataloader, dataset
 
         train_dataloader, train_dataset = None, None
@@ -179,3 +174,17 @@ class Pipeline(object):
             val_dataloader = get_dataloader(cfg["loader"]["val"], val_dataset)
 
         return (train_dataloader, val_dataloader, train_dataset, val_dataset)
+
+
+    def export_register(self):
+        self.logger.info("Exporting register")
+        register_save_dir = Path(__file__).parent.parent.parent/ "docs" / "register"
+        register_save_dir.mkdir(exist_ok=True)
+        MODEL_REGISTRY.export_to_file(register_save_dir / "model.txt")
+        OPTIMIZER_REGISTRY.export_to_file(register_save_dir / "optimizer.txt")
+        SCHEDULER_REGISTRY.export_to_file(register_save_dir / "scheduler.txt")
+        LOSSES_REGISTRY.export_to_file(register_save_dir  / "losses.txt")
+        DATASET_REGISTRY.export_to_file(register_save_dir  / "dataset.txt")
+        TRAINER_REGISTRY.export_to_file(register_save_dir  / "trainer.txt")
+        METRIC_REGISTRY.export_to_file(register_save_dir  / "metric.txt")
+        TRANSFORM_REGISTRY.export_to_file(register_save_dir  / "transform.txt")
