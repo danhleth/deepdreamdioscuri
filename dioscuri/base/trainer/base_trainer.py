@@ -17,7 +17,7 @@ from dioscuri.utils.meter import AverageValueMeter
 class BaseTrainer:
     r"""BaseTrainer class
 
-    Abstract learner class, support training and evaluate strategy.
+    Abstract trainer class, support training and evaluate strategy.
 
     Args:
         cfg: [description]

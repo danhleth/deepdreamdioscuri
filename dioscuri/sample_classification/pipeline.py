@@ -1,9 +1,7 @@
 import logging
 from typing import Callable, Dict, Optional
-import yaml
-from pathlib import Path
 
-import torch
+import yaml
 from torch.utils.data.dataset import random_split
 
 from dioscuri.base.opt import Opts
@@ -11,20 +9,21 @@ from dioscuri.base.opt import Opts
 from dioscuri.base.optimizers import OPTIMIZER_REGISTRY
 from dioscuri.base.optimizers.lr_scheduler import SCHEDULER_REGISTRY
 from dioscuri.base.transforms.alb import TRANSFORM_REGISTRY
-from dioscuri.base.criterion import CRITERION_REGISTRY
-from dioscuri.base.datasets import DATASET_REGISTRY
-from dioscuri.base.trainer import TRAINER_REGISTRY
-from dioscuri.base.models import MODEL_REGISTRY
-from dioscuri.base.metrics import METRIC_REGISTRY
-from dioscuri.base.test import evaluate
-from dioscuri.base.models.wrapper import ModelWithLoss
-from dioscuri.utils.getter import (get_dataloader, 
-                               get_instance, 
-                               get_instance_recursively)
+
+from dioscuri.sample_classification.criterion import CRITERION_REGISTRY
+from dioscuri.sample_classification.datasets import DATASET_REGISTRY
+from dioscuri.sample_classification.trainer import TRAINER_REGISTRY
+from dioscuri.sample_classification.models import MODEL_REGISTRY
+from dioscuri.sample_classification.metrics import METRIC_REGISTRY
+from dioscuri.sample_classification.test import evaluate
+from dioscuri.sample_classification.models.wrapper import ModelWithLoss
+from dioscuri.utils.getter import (get_dataloader, get_instance,
+                                 get_instance_recursively)
 from dioscuri.utils.loading import load_yaml
 
+from dioscuri.base.pipeline import BasePipeline
 
-class BasePipeline:
+class Pipeline(BasePipeline):
     """docstring for Pipeline."""
 
     def __init__(
@@ -33,7 +32,7 @@ class BasePipeline:
         cfg_path: Optional[str] = None,
         transform_cfg_path: Optional[str] = None,
     ):
-        super(BasePipeline, self).__init__()
+        super(Pipeline, self).__init__(opt, cfg_path, transform_cfg_path)
         self.opt = opt
         assert (cfg_path is not None) or (
             opt.cfg_pipeline is not None
@@ -41,7 +40,7 @@ class BasePipeline:
         self.cfg = (
             load_yaml(cfg_path) if cfg_path is not None else load_yaml(opt.cfg_pipeline)
         )
-        
+
         assert (transform_cfg_path is not None) or (
             opt.cfg_transform is not None
         ), "trainer params is none, \n please create config file follow default format."
@@ -50,9 +49,8 @@ class BasePipeline:
         else:
             self.transform_cfg = load_yaml(opt.cfg_transform)
 
-
         self.device = opt.device
-        torch.cuda.set_device(self.device)
+
         self.transform = None
         if self.transform_cfg is not None:
             self.transform = get_instance_recursively(
@@ -60,15 +58,19 @@ class BasePipeline:
             )
 
         data = self.get_data(self.cfg["data"], self.transform, return_dataset=False)
-        self.train_dataloader,self.val_dataloader,self.train_dataset,self.val_dataset = data
-        
-        backbone = get_instance(self.cfg["model"], registry=MODEL_REGISTRY).to(self.device)
+        (
+            self.train_dataloader,
+            self.val_dataloader,
+            self.train_dataset,
+            self.val_dataset,
+        ) = data
 
-        criterion = get_instance(self.cfg["criterion"], registry=CRITERION_REGISTRY)
-        
-        self.model = ModelWithLoss(backbone, criterion)
+        model = get_instance(self.cfg["model"], registry=MODEL_REGISTRY).to(self.device)
+        criterion = get_instance(self.cfg["criterion"], registry=CRITERION_REGISTRY).to(
+            self.device
+        )
+        self.model = ModelWithLoss(model, criterion)
 
-    
         self.metric = {
             mcfg["name"]: get_instance(mcfg, registry=METRIC_REGISTRY)
             for mcfg in self.cfg["metric"]
@@ -107,10 +109,11 @@ class BasePipeline:
         ) as outfile:
             yaml.dump(save_cfg, outfile, default_flow_style=False)
         self.logger = logging.getLogger()
+        self.export_register()
 
     def sanitycheck(self):
         self.logger.info("Sanity checking before training")
-        
+        # self.evaluate()
 
     def fit(self):
         self.sanitycheck()
@@ -144,7 +147,7 @@ class BasePipeline:
                     registry=DATASET_REGISTRY,
                     transform=transform[stage],
                 )
-            dataloader = get_dataloader(cfg["loader"][stage], dataset, local_rank=self.device)
+            dataloader = get_dataloader(cfg["loader"][stage], dataset)
             return dataloader, dataset
 
         train_dataloader, train_dataset = None, None
@@ -173,17 +176,3 @@ class BasePipeline:
             val_dataloader = get_dataloader(cfg["loader"]["val"], val_dataset)
 
         return (train_dataloader, val_dataloader, train_dataset, val_dataset)
-
-
-    def export_register(self):
-        self.logger.info("Exporting register")
-        register_save_dir = Path(__file__).parent.parent.parent/ "docs" / "register"
-        register_save_dir.mkdir(exist_ok=True)
-        MODEL_REGISTRY.export_to_file(register_save_dir / "model.txt")
-        OPTIMIZER_REGISTRY.export_to_file(register_save_dir / "optimizer.txt")
-        SCHEDULER_REGISTRY.export_to_file(register_save_dir / "scheduler.txt")
-        CRITERION_REGISTRY.export_to_file(register_save_dir  / "criterion.txt")
-        DATASET_REGISTRY.export_to_file(register_save_dir  / "dataset.txt")
-        TRAINER_REGISTRY.export_to_file(register_save_dir  / "trainer.txt")
-        METRIC_REGISTRY.export_to_file(register_save_dir  / "metric.txt")
-        TRANSFORM_REGISTRY.export_to_file(register_save_dir  / "transform.txt")

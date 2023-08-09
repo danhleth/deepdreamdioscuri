@@ -1,0 +1,24 @@
+name: dioscuri
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  #
+  - pytorch
+  - torchvision
+  - pytorch-cuda=11.8
+  #
+  - timm
+  - opencv
+  - pandas
+  - albumentations
+  - tqdm
+  - tensorboard
+  - matplotlib
+  - pyyaml
+  - tabulate
+  - scipy=1.8.1
+  - pip
+  - pip:
+    - einops

@@ -1,3 +1,3 @@
 from dioscuri.base.registry import Registry
 
-LOSSES_REGISTRY = Registry('LOSSES')
+CRITERION_REGISTRY = Registry('CRITERION')
