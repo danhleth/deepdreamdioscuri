@@ -52,6 +52,7 @@ class BasePipeline:
 
 
         self.device = opt.device
+        print(self.device)
         torch.cuda.set_device(self.device)
         self.transform = None
         if self.transform_cfg is not None:

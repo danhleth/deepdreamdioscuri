@@ -31,15 +31,15 @@ data: # instruction here
     val: 0.4
   dataset:
     train:
-      name: DATASET
+      name: CATEMOTIONDATASET
       args:
-        root_dir: "/mnt/ai_data/DanhAI/Face_project/datasets/AFAD-Full"
-        annotation_file: "train.csv"
+        root_dir: "/mnt/ai_data/DanhAI/cat_emotion_classification"
+        annotation_file: "train_annotation.csv"
     val:
-      name: AFADDataset
+      name: CATEMOTIONDATASET
       args:
-        root_dir: "/mnt/ai_data/DanhAI/Face_project/datasets/AFAD-Full"
-        annotation_file: "val.csv"
+        root_dir: "/mnt/ai_data/DanhAI/cat_emotion_classification"
+        annotation_file: "valid_annotation.csv"
 
   loader:
     train:

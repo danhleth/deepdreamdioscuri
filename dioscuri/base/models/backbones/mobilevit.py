@@ -3,8 +3,6 @@ import torch.nn as nn
 
 from einops import rearrange
 
-from mfaa.faceagegender.models import MODEL_REGISTRY
-
 def conv_1x1_bn(inp, oup):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 1, 1, 0, bias=False),

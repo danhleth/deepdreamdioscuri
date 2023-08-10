@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import torch.utils.data as data
 from PIL import Image
+import cv2
+import pandas as pd
 
 
 class ConcatDataset(data.ConcatDataset):
@@ -115,3 +117,44 @@ class ImageDataset(data.Dataset):
         ori_sizes = [s["ori_size"] for s in batch]
 
         return {"inputs": imgs, "img_names": img_names, "ori_sizes": ori_sizes}
+
+
+class Image2DDataset(data.Dataset):
+    """
+        Dataset contains folder of images
+
+        root_dir: `str`
+            path to folder of images
+        annotation: `str`
+            path to annotation file of dataset
+            default: image_path, label_id
+        transform:
+            list of transformation
+    """
+    def __init__(self, root_dir, annotation, transform=None):
+        self.root_dir = root_dir
+        self.annotation = annotation
+        self.transform = transform
+        self.df = self.load_annotation()
+    
+    def load_annotation(self):
+        df = pd.read_csv(self.annotation)
+        return df
+    
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, idx):
+        img_name = os.path.join(self.root_dir, self.df.iloc[idx, 0])
+        image = cv2.imread(img_name)
+        label = self.df.iloc[idx, 1]
+        image /= 255.0
+        if self.transform:
+            try:
+                image = self.transform(image)
+            except:
+                image = self.transform(image=np.array(image))["image"]
+        return {"input": image.float(), 
+                "label": label, 
+                "img_name": img_name, 
+                "ori_size": [image.shape[0], image.shape[1]]}

@@ -1,0 +1,1 @@
+from dioscuri.base.models import MODEL_REGISTRY

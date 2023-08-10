@@ -6,7 +6,7 @@ from tqdm.auto import tqdm
 from dioscuri.utils.device import detach, move_to
 from dioscuri.utils.meter import AverageValueMeter
 
-from .metrics.metric_template import Metric
+from dioscuri.base.metrics.metric_template import Metric
 
 
 @torch.no_grad()

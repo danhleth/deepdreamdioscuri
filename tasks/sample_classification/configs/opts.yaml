@@ -10,7 +10,7 @@ opts:
   nepochs: 100
   batch_size: 10
 
-  gpus: 3 # untested yet
+  gpus: 1 # untested yet
   num_workers: 4
   fp16: True # untested yet
 
