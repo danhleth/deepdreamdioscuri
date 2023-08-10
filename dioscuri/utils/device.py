@@ -51,4 +51,4 @@ def detach(obj: Any):
     elif isinstance(obj, tuple):
         return tuple(detach(list(obj)))
     else:
-        raise TypeError("Invalid type for detach")
+        raise TypeError("Invalid type for detach", type(obj))

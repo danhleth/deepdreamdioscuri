@@ -15,13 +15,13 @@ class ClassificationCELoss(nn.Module):
         pred: Dict[str, Any],
         batch: Dict[str, Any],
     ):
-        pred = pred["logits"] if isinstance(pred, Dict) else pred
-        target = batch["labels"] if isinstance(batch, Dict) else batch
+        pred = pred["logit"] if isinstance(pred, Dict) else pred
+        target = batch["label"] if isinstance(batch, Dict) else batch
 
         if pred.shape == target.shape:
             loss = self.criterion(pred, target)
         else:
             loss = self.criterion(pred, target.view(-1).contiguous())
 
-        loss_dict = {"loss": loss.item()}
+        loss_dict = {"loss": loss}
         return loss, loss_dict

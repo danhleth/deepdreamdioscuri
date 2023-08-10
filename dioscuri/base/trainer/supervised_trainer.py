@@ -171,6 +171,6 @@ class SupervisedTrainer(BaseTrainer):
             self.tsboard.update_metric("val", k, m, epoch)
 
         outs, batch = last_batch_pred
-        self.save_result(outs, batch, stage="val")
+        # self.save_result(outs, batch, stage="val")
 
         return avg_loss

@@ -28,9 +28,9 @@ class ModelWithLoss(nn.Module):
         outputs = self.model(batch["input"])
         loss, loss_dict = self.criterion(outputs, batch)
         return {
-            'out': outputs['out'],
-            'loss': loss,
-            'loss_dict': loss_dict
+            "logit": outputs["logit"],
+            "loss": loss,
+            "loss_dict": loss_dict
         }
 
     def forward_train(self, batch):

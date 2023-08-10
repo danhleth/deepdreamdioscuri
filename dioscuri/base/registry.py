@@ -37,6 +37,14 @@ class Registry(Iterable[Tuple[str, Any]]):
             name, self._name
         )
         self._obj_map[name] = obj
+    
+    def export_to_file(self, file_path: str) -> None:
+        """
+        Export the registry to a file.
+        """
+        content = self.__repr__()
+        with open(file_path, "w") as f:
+            f.write(content)
 
     def register(self, obj: Any = None, prefix: str = '') -> Any:
         """

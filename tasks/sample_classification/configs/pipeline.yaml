@@ -1,4 +1,4 @@
-learner:
+trainer:
   name: SupervisedTrainer
   args:
 device:
@@ -6,9 +6,9 @@ device:
   args:
     default: cuda
 model:
-  name: mobilevit_xxs
+  name: mobilevit_xs
 criterion:
-  name: Huberwithstat
+  name: ClassificationCELoss
 
 optimizer:
   name: Adam
@@ -16,7 +16,7 @@ optimizer:
     lr: 0.0001
     
 metric:
-  - name: Accuracy
+  - name: ClassificationAccuracy
     args:
 scheduler:
   name: StepLR
@@ -45,12 +45,12 @@ data: # instruction here
     train:
       name: DataLoader
       args:
-        batch_size: 2
+        batch_size: 32
         shuffle: True
         drop_last: True
     val:
       name: DataLoader
       args:
-        batch_size: 2
+        batch_size: 8
         shuffle: False
         drop_last: False

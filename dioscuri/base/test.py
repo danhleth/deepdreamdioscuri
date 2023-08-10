@@ -36,7 +36,7 @@ def evaluate(
         batch = detach(batch)
         # 5: Update metric
         for m in metric.values():
-            m.update(outs['out'], batch)
+            m.update(outs, batch)
     avg_loss = running_loss.value()[0]
     if return_last_batch:
         last_batch_pred = outs, batch

@@ -118,8 +118,8 @@ class BaseTrainer:
                 outs = detach(out_dict)
                 batch = detach(batch)
                 for m in self.metric.values():
-                    m.update(outs['out'], batch)
-        self.save_result(outs, batch, stage="train")
+                    m.update(outs, batch)
+        # self.save_result(outs, batch, stage="train")
         avg_loss = total_loss.value()[0]
         return avg_loss
 
@@ -127,4 +127,4 @@ class BaseTrainer:
         raise NotImplementedError
 
     def save_result(self, pred, batch, stage: str, **kwargs):
-        NotImplemented
+        raise NotImplementedError
