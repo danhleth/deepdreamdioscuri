@@ -36,4 +36,4 @@ class ClassificationMobileViT(MobileViT):
 def mobilevit_xs():
     dims = [96, 120, 144]
     channels = [16, 32, 48, 48, 64, 64, 80, 80, 96, 96, 384]
-    return ClassificationMobileViT((256, 256), dims, channels, num_classes=4)
+    return ClassificationMobileViT((256, 256), dims, channels, num_classes=14)
