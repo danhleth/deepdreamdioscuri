@@ -21,6 +21,8 @@ class ClassificationCELoss(nn.Module):
         if pred.shape == target.shape:
             loss = self.criterion(pred, target)
         else:
+            print(pred.size())
+            print(target.size())
             loss = self.criterion(pred, target.view(-1).contiguous())
 
         loss_dict = {"loss": loss}

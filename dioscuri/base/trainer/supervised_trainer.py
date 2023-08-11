@@ -47,7 +47,7 @@ class SupervisedTrainer(BaseTrainer):
         device: Optional[torch.device] = None,
     ):
         super().__init__(
-            save_dir=cfg.save_dir,
+            save_dir=cfg["save_dir"],
             train_data=train_data,
             val_data=val_data,
             device=device or get_device(),
@@ -58,17 +58,17 @@ class SupervisedTrainer(BaseTrainer):
             criterion=None,
             cfg=cfg,
         )
-        if cfg.pretrained is not None:
-            cp = load_checkpoint(cfg.pretrained)
+        if cfg["pretrained"] is not None:
+            cp = load_checkpoint(cfg["pretrained"])
             self.model.model.load_state_dict(cp["model_state_dict"])
             if cfg.resume:
                 self.optimizer.load_state_dict(["optimizer_state_dict"])
-        self.verbose = cfg.verbose
-        self.scaler = GradScaler(enabled=cfg.fp16)
+        self.verbose = cfg["verbose"]
+        self.scaler = GradScaler(enabled=cfg["fp16"])
         self.cfg = cfg
 
     def fit(self):
-        for epoch in range(self.cfg.nepochs):
+        for epoch in range(self.cfg["nepochs"]):
 
             # Note learning rate
             for i, group in enumerate(self.optimizer.param_groups):
@@ -90,8 +90,8 @@ class SupervisedTrainer(BaseTrainer):
                 m.summary()
 
             # 2: Evalutation phase
-            if (epoch + 1) % self.cfg.val_step == 0:
-                with autocast(enabled=self.cfg.fp16):
+            if (epoch + 1) % self.cfg["val_step"] == 0:
+                with autocast(enabled=self.cfg["fp16"]):
                     # 2: Evaluating model
                     avg_loss = self.evaluate(epoch, dataloader=self.val_data)
 
@@ -105,7 +105,7 @@ class SupervisedTrainer(BaseTrainer):
                     self.scheduler.step(avg_loss)
 
                     # 4: Saving checkpoints
-                    if not self.cfg.debug:
+                    if not self.cfg["debug"]:
                         # Get latest val loss here
                         val_metric = {k: m.value()
                                       for k, m in self.metric.items()}

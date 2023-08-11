@@ -1,0 +1,112 @@
+opt:
+  debug: true
+  demo: false
+  device: cuda:1
+  fp16: true
+  gpus: 1
+  id: default
+  log_step: 1
+  nepochs: 30
+  num_iters: -1
+  num_workers: 4
+  pretrained: null
+  resume: false
+  save_dir: runs
+  seed: 123
+  test: false
+  val_step: 1
+  verbose: true
+pipeline:
+  criterion:
+    args: {}
+    name: ClassificationCELoss
+  data:
+    dataset:
+      train:
+        args:
+          annotation_file: train_annotation.csv
+          root_dir: /mnt/ai_data/DanhAI/cat_emotion_classification
+        name: CATEMOTIONDATASET
+      val:
+        args:
+          annotation_file: valid_annotation.csv
+          root_dir: /mnt/ai_data/DanhAI/cat_emotion_classification
+        name: CATEMOTIONDATASET
+    loader:
+      train:
+        args:
+          batch_size: 32
+          drop_last: true
+          shuffle: true
+        name: DataLoader
+      val:
+        args:
+          batch_size: 8
+          drop_last: false
+          shuffle: false
+        name: DataLoader
+    splits:
+      train: 0.6
+      val: 0.4
+  device:
+    args:
+      default: cuda
+    name: get_device
+  metric:
+  - args: {}
+    name: ClassificationAccuracy
+  model:
+    args: {}
+    name: mobilevit_xs
+  optimizer:
+    args:
+      lr: 0.0001
+    name: Adam
+  scheduler:
+    args:
+      gamma: 0.2
+      last_epoch: -1
+      step_size: 3
+    name: StepLR
+  trainer:
+    args: {}
+    name: SupervisedTrainer
+transform:
+  train:
+    args:
+      transforms:
+      - args:
+          height: 256
+          width: 256
+        name: AlbResize
+      - args:
+          mean:
+          - 0.5
+          - 0.5
+          - 0.5
+          std:
+          - 0.5
+          - 0.5
+          - 0.5
+        name: AlbNormalize
+      - name: AlbToTensorV2
+    name: AlbCompose
+  val:
+    args:
+      transforms:
+      - args:
+          height: 256
+          width: 256
+        name: AlbResize
+      - args:
+          mean:
+          - 0.5
+          - 0.5
+          - 0.5
+          std:
+          - 0.5
+          - 0.5
+          - 0.5
+        name: AlbNormalize
+      - name: AlbToTensorV2
+    name: AlbCompose

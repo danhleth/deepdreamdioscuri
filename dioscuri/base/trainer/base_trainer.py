@@ -90,7 +90,7 @@ class BaseTrainer:
 
             # 2: Clear gradients from previous iteration
             self.optimizer.zero_grad()
-            with autocast(enabled=self.cfg.fp16):
+            with autocast(enabled=self.cfg["fp16"]):
                 # 3: Get network outputs
                 # 4: Calculate the loss
                 out_dict = self.model(batch)
@@ -107,7 +107,7 @@ class BaseTrainer:
                 running_loss.add(out_dict['loss'].item())
                 total_loss.add(out_dict['loss'].item())
 
-                if (i + 1) % self.cfg.log_step == 0 or (i + 1) == len(dataloader):
+                if (i + 1) % self.cfg["log_step"] == 0 or (i + 1) == len(dataloader):
                     self.tsboard.update_loss(
                         "train", running_loss.value(
                         )[0], epoch * len(dataloader) + i

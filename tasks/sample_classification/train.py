@@ -8,6 +8,7 @@ from dioscuri.base.opt import Opts
 from dioscuri.sample_classification.pipeline import Pipeline
 
 if __name__ == "__main__":
-    opts = Opts.parse(f"{current_dir}/configs/opts.yaml")
+    opts = Opts().parse_args()
+    print(type(opts))
     train_pipeline = Pipeline(opts)
     train_pipeline.fit()

@@ -2,12 +2,12 @@ opts:
   pretrained: null # untested yet
   id: default
 
-  debug: False # if debug = true, model will not save checkpoint
+  debug: True # if debug = true, model will not save checkpoint
   demo: False # untested yet
   resume: False # untested yet
   test: False # untested yet
 
-  nepochs: 100
+  nepochs: 30
   batch_size: 10
 
   gpus: 1 # untested yet

@@ -32,61 +32,48 @@ class BasePipeline:
         opt: Opts,
         cfg_path: Optional[str] = None,
         transform_cfg_path: Optional[str] = None,
-    ):
-        super(BasePipeline, self).__init__()
-        self.opt = opt
-        assert (cfg_path is not None) or (
-            opt.cfg_pipeline is not None
-        ), "trainer params is none, \n please create config file follow default format."
-        self.cfg = (
-            load_yaml(cfg_path) if cfg_path is not None else load_yaml(opt.cfg_pipeline)
-        )
+    ):  
         
-        assert (transform_cfg_path is not None) or (
-            opt.cfg_transform is not None
-        ), "trainer params is none, \n please create config file follow default format."
-        if transform_cfg_path is not None:
-            self.transform_cfg = load_yaml(transform_cfg_path)
-        else:
-            self.transform_cfg = load_yaml(opt.cfg_transform)
+        self.cfg_pipeline = opt["pipeline"]
+        self.cfg_transform = opt["transform"]
+        opt = opt["opt"]
+        self.opt = opt
 
-
-        self.device = opt.device
+        self.device = opt["device"]
         print(self.device)
         torch.cuda.set_device(self.device)
         self.transform = None
-        if self.transform_cfg is not None:
+        if self.cfg_transform is not None:
             self.transform = get_instance_recursively(
-                self.transform_cfg, registry=TRANSFORM_REGISTRY
+                self.cfg_transform, registry=TRANSFORM_REGISTRY
             )
-
-        data = self.get_data(self.cfg["data"], self.transform, return_dataset=False)
+        data = self.get_data(self.cfg_pipeline["data"], self.transform, return_dataset=False)
         self.train_dataloader,self.val_dataloader,self.train_dataset,self.val_dataset = data
         
-        backbone = get_instance(self.cfg["model"], registry=MODEL_REGISTRY).to(self.device)
+        backbone = get_instance(self.cfg_pipeline["model"], registry=MODEL_REGISTRY).to(self.device)
 
-        criterion = get_instance(self.cfg["criterion"], registry=CRITERION_REGISTRY)
+        criterion = get_instance(self.cfg_pipeline["criterion"], registry=CRITERION_REGISTRY)
         
         self.model = ModelWithLoss(backbone, criterion)
 
     
         self.metric = {
             mcfg["name"]: get_instance(mcfg, registry=METRIC_REGISTRY)
-            for mcfg in self.cfg["metric"]
+            for mcfg in self.cfg_pipeline["metric"]
         }
 
         self.optimizer = get_instance(
-            self.cfg["optimizer"],
+            self.cfg_pipeline["optimizer"],
             registry=OPTIMIZER_REGISTRY,
             params=self.model.parameters(),
         )
 
         self.scheduler = get_instance(
-            self.cfg["scheduler"], registry=SCHEDULER_REGISTRY, optimizer=self.optimizer
+            self.cfg_pipeline["scheduler"], registry=SCHEDULER_REGISTRY, optimizer=self.optimizer
         )
 
         self.trainer = get_instance(
-            self.cfg["trainer"],
+            self.cfg_pipeline["trainer"],
             cfg=self.opt,
             train_data=self.train_dataloader,
             val_data=self.val_dataloader,
@@ -99,9 +86,9 @@ class BasePipeline:
         )
 
         save_cfg = {}
-        save_cfg["opt"] = vars(opt)
-        save_cfg["pipeline"] = self.cfg
-        save_cfg['transform'] = self.transform_cfg
+        save_cfg["opt"] = opt
+        save_cfg["pipeline"] = self.cfg_pipeline
+        save_cfg['transform'] = self.cfg_transform
         save_cfg["opt"]["save_dir"] = str(save_cfg["opt"]["save_dir"])
         with open(
             self.trainer.save_dir / "checkpoints" / "config.yaml", "w"
