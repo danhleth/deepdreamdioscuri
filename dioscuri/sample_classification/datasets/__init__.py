@@ -1,5 +1,7 @@
 from dioscuri.base.datasets import DATASET_REGISTRY
 
 from .cat_emotion_dataset import CATEMOTIONDATASET
+from .truck_classification_dataset import TRUCKCLASSIFICATIONDATASET
 
 DATASET_REGISTRY.register(CATEMOTIONDATASET)
+DATASET_REGISTRY.register(TRUCKCLASSIFICATIONDATASET)
