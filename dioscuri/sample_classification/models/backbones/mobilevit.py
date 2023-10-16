@@ -33,7 +33,7 @@ class ClassificationMobileViT(MobileViT):
         logit = self.logit(x)
         return {"logit": logit}
 
-def mobilevit_xs():
+def mobilevit_xs(image_size=256, num_classes=1000):
     dims = [96, 120, 144]
     channels = [16, 32, 48, 48, 64, 64, 80, 80, 96, 96, 384]
-    return ClassificationMobileViT((256, 256), dims, channels, num_classes=4)
+    return ClassificationMobileViT((image_size, image_size), dims, channels, num_classes=num_classes)

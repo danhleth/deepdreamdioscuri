@@ -151,6 +151,9 @@ class SupervisedTrainer(BaseTrainer):
             else:
                 logging.info(
                     f"{k} is not improved from {self.best_metric[k]:.6f}.")
+        
+        # save checkpoint per epoch
+        save_model(data, self.save_dir / "checkpoints" / Path(f"{epoch}.pth"))
 
     @torch.no_grad()
     def evaluate(self, epoch, dataloader):

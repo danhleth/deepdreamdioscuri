@@ -1,22 +1,22 @@
 from pathlib import Path
 from typing import List, Tuple
 
-from torch.utils.data import Dataset
+from dioscuri.base.datasets.image_dataset import IMAGEDATASET
 
 import cv2
 import pandas as pd
 import numpy as np
 
-class TRUCKCLASSIFICATIONDATASET(Dataset):
+class TRUCKCLASSIFICATIONDATASET(IMAGEDATASET):
     """ Dataset contains folder of images
         source: https://universe.roboflow.com/roboflow-100/vehicles-q0x2v/dataset/2
     """
-    def __init__(self, root_dir, annotation_file, transform=None):
+    def __init__(self, num_classes, root_dir, annotation_file, transform=None):
         self.root_dir = Path(root_dir)
         annotation_file = Path(annotation_file)
         self.transform = transform
         self.df = pd.read_csv(self.root_dir/annotation_file)
-        self.num_classes = 12
+        self.num_classes = num_classes
 
     def __len__(self):
         return len(self.df)
@@ -33,7 +33,7 @@ class TRUCKCLASSIFICATIONDATASET(Dataset):
         
         # make one-hot vector
         tmp = np.zeros(self.num_classes)
-        tmp[label_id] = 1
+        tmp[int(label_id)] = 1
         label_id = tmp
         
         image = cv2.imread(str(image_path))
