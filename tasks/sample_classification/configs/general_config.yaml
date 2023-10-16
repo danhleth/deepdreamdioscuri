@@ -1,5 +1,5 @@
 opt:
-  debug: true
+  debug: false
   demo: false
   device: cuda:1
   fp16: true
@@ -24,24 +24,26 @@ pipeline:
     dataset:
       train:
         args:
-          annotation_file: train_annotation.csv
-          root_dir: /mnt/ai_data/DanhAI/cat_emotion_classification
-        name: CATEMOTIONDATASET
+          num_classes: 13
+          annotation_file: train_annotations.csv
+          root_dir: /data/danh/vehicle_classification/vehicles_class_data
+        name: TRUCKCLASSIFICATIONDATASET
       val:
         args:
-          annotation_file: valid_annotation.csv
-          root_dir: /mnt/ai_data/DanhAI/cat_emotion_classification
-        name: CATEMOTIONDATASET
+          num_classes: 13
+          annotation_file: valid_annotations.csv
+          root_dir: /data/danh/vehicle_classification/vehicles_class_data
+        name: TRUCKCLASSIFICATIONDATASET
     loader:
       train:
         args:
-          batch_size: 32
+          batch_size: 256
           drop_last: true
           shuffle: true
         name: DataLoader
       val:
         args:
-          batch_size: 8
+          batch_size: 256
           drop_last: false
           shuffle: false
         name: DataLoader
@@ -53,10 +55,12 @@ pipeline:
       default: cuda
     name: get_device
   metric:
-  - args: {}
+  - args: 
     name: ClassificationAccuracy
   model:
-    args: {}
+    args: 
+      image_size: 128
+      num_classes: 13
     name: mobilevit_xs
   optimizer:
     args:
@@ -76,8 +80,8 @@ transform:
     args:
       transforms:
       - args:
-          height: 256
-          width: 256
+          height: 128
+          width: 128
         name: AlbResize
       - args:
           mean:
@@ -95,8 +99,8 @@ transform:
     args:
       transforms:
       - args:
-          height: 256
-          width: 256
+          height: 128
+          width: 128
         name: AlbResize
       - args:
           mean:

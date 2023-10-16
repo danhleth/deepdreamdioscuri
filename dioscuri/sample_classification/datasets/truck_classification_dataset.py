@@ -7,16 +7,16 @@ import cv2
 import pandas as pd
 import numpy as np
 
-class CATEMOTIONDATASET(IMAGEDATASET):
+class TRUCKCLASSIFICATIONDATASET(IMAGEDATASET):
     """ Dataset contains folder of images
-        source: https://www.kaggle.com/datasets/anshtanwar/pets-facial-expression-dataset
+        source: https://universe.roboflow.com/roboflow-100/vehicles-q0x2v/dataset/2
     """
-    def __init__(self, root_dir, annotation_file, transform=None):
+    def __init__(self, num_classes, root_dir, annotation_file, transform=None):
         self.root_dir = Path(root_dir)
         annotation_file = Path(annotation_file)
         self.transform = transform
         self.df = pd.read_csv(self.root_dir/annotation_file)
-        self.num_classes = 4
+        self.num_classes = num_classes
 
     def __len__(self):
         return len(self.df)
@@ -33,7 +33,7 @@ class CATEMOTIONDATASET(IMAGEDATASET):
         
         # make one-hot vector
         tmp = np.zeros(self.num_classes)
-        tmp[label_id] = 1
+        tmp[int(label_id)] = 1
         label_id = tmp
         
         image = cv2.imread(str(image_path))
